@@ -1,13 +1,41 @@
 import cv2
 import streamlit as st
-from PIL import Image
 import numpy as np
 import tempfile
 import os
 import asyncio
 from ultralytics import YOLO
+from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
 
-async def main():
+# Define a video transformer for object tracking
+class ObjectTrackingTransformer(VideoTransformerBase):
+    def __init__(self):
+        # Load YOLOv8 model
+        self.model = YOLO('yolov8n.pt')
+
+    def transform(self, frame):
+        # Convert frame to OpenCV format (BGR)
+        frame_bgr = np.array(frame.to_image())
+
+        # Resize frame to reduce processing time
+        frame_resized = cv2.resize(frame_bgr, (640, 480))
+
+        # Detect and track objects using YOLOv8
+        results = self.model.track(frame_resized, persist=True)
+
+        # Plot results
+        frame_annotated = results[0].plot()
+
+        # Convert frame back to RGB format
+        frame_rgb = cv2.cvtColor(frame_annotated, cv2.COLOR_BGR2RGB)
+
+        return frame_rgb
+
+# Streamlit web app
+def main():
+    # Set page title
+    st.set_page_config(page_title="Object Tracking with Streamlit")
+
     # Streamlit web app
     st.title("Object Tracking")
 
@@ -15,22 +43,8 @@ async def main():
     option = st.radio("Choose an option:", ("Live Stream", "Upload Video"))
 
     if option == "Live Stream":
-        # Initialize webcam
-        cap = cv2.VideoCapture(0)
-
-        # Button to start the stream
-        start_button_pressed = st.button("Start Live Stream")
-
-        # Placeholder for video frame
-        frame_placeholder = st.empty()
-
-        # Button to stop the stream
-        stop_button_pressed = st.button("Stop")
-
-        # Check if the start button is pressed
-        if start_button_pressed:
-            # Call the function to capture video with the stop button state
-            await capture_video(cap, stop_button_pressed, frame_placeholder)
+        # Start the WebRTC stream with object tracking
+        webrtc_streamer(key="live-stream", video_transformer_factory=ObjectTrackingTransformer)
 
     elif option == "Upload Video":
         # File uploader for video upload
@@ -48,50 +62,14 @@ async def main():
         # Check if the start button is pressed and file is uploaded
         if start_button_pressed and uploaded_file is not None:
             # Call the function to track uploaded video with the stop button state
-            await track_uploaded_video(uploaded_file, stop_button_pressed, frame_placeholder)
+            track_uploaded_video(uploaded_file, stop_button_pressed, frame_placeholder)
 
         # Release resources
         if uploaded_file:
             uploaded_file.close()
 
-# Function to capture video stream
-async def capture_video(cap, stop_button, frame_placeholder):
-    # Load YOLOv8 model
-    model = YOLO('yolov8n.pt')
-
-    frame_count = 0
-    while cap.isOpened() and not stop_button:
-        ret, frame = cap.read()
-
-        if not ret:
-            st.write("The video capture has ended.")
-            break
-
-        # Process every 5th frame
-        if frame_count % 5 == 0:
-            # Resize frame to reduce processing time
-            frame_resized = cv2.resize(frame, (640, 480))
-            
-            # Convert frame from BGR to RGB
-            frame_rgb = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
-
-            # Detect and track objects using YOLOv8
-            results = model.track(frame_rgb, persist=True)
-
-            # Plot results
-            frame_ = results[0].plot()
-
-            # Display frame with bounding boxes
-            frame_placeholder.image(frame_, channels="RGB")
-
-        frame_count += 1
-        await asyncio.sleep(0)  # Allow other tasks to run
-
-    # Release resources
-    cap.release()
-
 # Function to perform object tracking on uploaded video
-async def track_uploaded_video(video_file, stop_button, frame_placeholder):
+def track_uploaded_video(video_file, stop_button, frame_placeholder):
     # Load YOLOv8 model
     model = YOLO('yolov8n.pt')
 
@@ -116,20 +94,16 @@ async def track_uploaded_video(video_file, stop_button, frame_placeholder):
             # Resize frame to reduce processing time
             frame_resized = cv2.resize(frame, (640, 480))
 
-            # Convert frame from BGR to RGB
-            frame_rgb = cv2.cvtColor(frame_resized, cv2.COLOR_BGR2RGB)
-
             # Detect and track objects using YOLOv8
-            results = model.track(frame_rgb, persist=True)
+            results = model.track(frame_resized, persist=True)
 
             # Plot results
             frame_ = results[0].plot()
 
             # Display frame with bounding boxes
-            frame_placeholder.image(frame_, channels="RGB")
+            frame_placeholder.image(frame_, channels="BGR")
 
         frame_count += 1
-        await asyncio.sleep(0)  # Allow other tasks to run
 
     # Release resources
     cap.release()
@@ -137,4 +111,5 @@ async def track_uploaded_video(video_file, stop_button, frame_placeholder):
     os.remove(temp_video.name)
 
 # Run the app
-asyncio.run(main())
+if __name__ == "__main__":
+    main()
