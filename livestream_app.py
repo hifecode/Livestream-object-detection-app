@@ -44,7 +44,7 @@ def main():
 
     if option == "Live Stream":
         # Start the WebRTC stream with object tracking
-        webrtc_streamer(key="live-stream", video_transformer_factory=ObjectTrackingTransformer)
+        webrtc_streamer(key="live-stream", video_processor_factory=ObjectTrackingTransformer)
 
     elif option == "Upload Video":
         # File uploader for video upload
