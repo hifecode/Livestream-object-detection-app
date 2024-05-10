@@ -44,7 +44,13 @@ def main():
 
     if option == "Live Stream":
         # Start the WebRTC stream with object tracking
-        webrtc_streamer(key="live-stream", video_processor_factory=ObjectTrackingTransformer)
+        # WebRTC streamer configuration
+        rtc_configuration = {
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        }
+        # Start the WebRTC stream with object tracking
+        webrtc_streamer(key="live-stream", video_processor_factory=ObjectTrackingTransformer,
+                        rtc_configuration=rtc_configuration)
 
     elif option == "Upload Video":
         # File uploader for video upload
