@@ -3,7 +3,6 @@ import streamlit as st
 import numpy as np
 import tempfile
 import os
-import asyncio
 from ultralytics import YOLO
 from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
 
@@ -13,9 +12,9 @@ class ObjectTrackingTransformer(VideoTransformerBase):
         # Load YOLOv8 model
         self.model = YOLO('yolov8n.pt')
 
-    def transform(self, frame):
+    async def recv(self, frame):
         # Convert frame to OpenCV format (BGR)
-        frame_bgr = np.array(frame.to_image())
+        frame_bgr = frame.to_ndarray(format="bgr24")
 
         # Resize frame to reduce processing time
         frame_resized = cv2.resize(frame_bgr, (640, 480))
@@ -29,7 +28,7 @@ class ObjectTrackingTransformer(VideoTransformerBase):
         # Convert frame back to RGB format
         frame_rgb = cv2.cvtColor(frame_annotated, cv2.COLOR_BGR2RGB)
 
-        return frame_rgb
+        return av.VideoFrame.from_ndarray(frame_rgb, format="rgb24")
 
 # Streamlit web app
 def main():
