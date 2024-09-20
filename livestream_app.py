@@ -93,7 +93,7 @@ def main():
         #                 rtc_configuration=rtc_configuration, sendback_audio=False)
         webrtc_streamer(key="live-stream", 
                 #mode=WebRtcMode.SENDRECV,  
-                video_frame_callback=video_frame_callback,
+                video_frame_callback=recv,
                 rtc_configuration={"iceServers": get_ice_servers()},
                 media_stream_constraints={"video": True, "audio": False},
                 async_processing=True)
