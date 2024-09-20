@@ -92,7 +92,7 @@ def main():
         # webrtc_streamer(key="live-stream", video_frame_callback=recv,
         #                 rtc_configuration=rtc_configuration, sendback_audio=False)
         webrtc_streamer(key="live-stream", mode=WebRtcMode.SENDRECV,   
-                rtc_configuration={"iceServers": [{"urls": ["stun1.l.google.com:19302"]}]},
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
                 video_processor_factory=VideoProcessor,
                 media_stream_constraints={"video": True, "audio": False},
                 async_processing=True)
