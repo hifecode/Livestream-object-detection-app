@@ -17,7 +17,7 @@ frame_skip = 5  # Process every 5th frame
 class VideoProcessor(VideoProcessorBase):
     def __init__(self):
         self.model = model
-        def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+    def recv(self, frame):
                 # Skip frames to reduce processing load
                 global frame_skip, cached_frame
                 
