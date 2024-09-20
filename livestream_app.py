@@ -4,7 +4,7 @@ import numpy as np
 import tempfile
 import os
 from ultralytics import YOLO
-from streamlit_webrtc import  webrtc_streamer, WebRtcMode
+from streamlit_webrtc import  (webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration)
 import av
 
 
@@ -78,21 +78,23 @@ def main():
     if option == "Live Stream":
         # Start the WebRTC stream with object tracking
         # WebRTC streamer configuration
-        # rtc_configuration = {
-        #    "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
-        #}
+        # Define RTC configuration for WebRTC
+        RTC_CONFIGURATION = RTCConfiguration({
+            "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
+        })
         # Start the WebRTC stream with object tracking
         # webrtc_streamer(key="live-stream", video_frame_callback=recv,
         #                 rtc_configuration=rtc_configuration, sendback_audio=False)
         webrtc_streamer(key="live-stream", mode=WebRtcMode.SENDRECV, video_frame_callback=recv, 
                 media_stream_constraints={"video": True, "audio": False},
-                async_processing=True,
+                rtc_configuration=RTC_CONFIGURATION,
                 video_html_attrs={
                     "style": {"width": "100%"},
                     "controls": False,
                     "autoPlay": True,
                     "muted": True,
-                })
+                },
+                async_processing=True)
 
 
 
