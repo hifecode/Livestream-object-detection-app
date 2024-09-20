@@ -17,7 +17,7 @@ model = YOLO('yolov8n.pt')
 class VideoProcessor(VideoProcessorBase):
     def __init__(self):
         self.model = model
-        self.frame_skip = 5  # Class-level variable for frame skipping
+        self.frame_skip = 10  # Class-level variable for frame skipping
         self.cached_frame = None  # Class-level variable for cached frames
         
     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
@@ -35,7 +35,7 @@ class VideoProcessor(VideoProcessorBase):
                 frame_bgr = frame.to_ndarray(format="bgr24")
         
                 # Resize frame to reduce processing time
-                frame_resized = cv2.resize(frame_bgr, (320, 240)) # Instead of 640x480
+                frame_resized = cv2.resize(frame_bgr, (160, 120)) # Instead of 640x480
         
                 # # Detect and track objects using YOLOv8
                 # results = model.track(frame_resized, persist=True)
@@ -50,7 +50,7 @@ class VideoProcessor(VideoProcessorBase):
                 # Process every nth frame
                 if  self.frame_skip == 0:
                     # Reset the frame skip counter
-                    self.frame_skip = 5
+                    self.frame_skip = 10
         
                     # Detect and track objects using YOLOv8
                     results = self.model.track(frame_resized, persist=True)
