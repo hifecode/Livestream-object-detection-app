@@ -6,3 +6,4 @@ ultralytics==8.1.29
 lapx>=0.5.2
 streamlit-webrtc==0.47.6
 twilio~=8.1.0
+imutils==0.5.3
