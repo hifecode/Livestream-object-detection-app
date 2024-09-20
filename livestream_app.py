@@ -13,56 +13,59 @@ model = YOLO('yolov8n.pt')
 # Global variable to store the latest frame with bounding boxes
 cached_frame = None
 frame_skip = 5  # Process every 5th frame
-
-def recv(frame: av.VideoFrame) -> av.VideoFrame:
-        # Skip frames to reduce processing load
-        global frame_skip, cached_frame
+# Define a custom video processor class inheriting from VideoProcessorBase
+class VideoProcessor(VideoProcessorBase):
+    def __init__(self):
+        self.model = model
+        def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+                # Skip frames to reduce processing load
+                global frame_skip, cached_frame
+                
+                # if frame_skip > 0:
+                #     frame_skip -= 1
+                #     return frame
         
-        # if frame_skip > 0:
-        #     frame_skip -= 1
-        #     return frame
-
-        # Reset frame skip
-        # frame_skip = 5
-
-        # Convert frame to OpenCV format (BGR)
-        frame_bgr = frame.to_ndarray(format="bgr24")
-
-        # Resize frame to reduce processing time
-        frame_resized = cv2.resize(frame_bgr, (320, 240)) # Instead of 640x480
-
-        # # Detect and track objects using YOLOv8
-        # results = model.track(frame_resized, persist=True)
-
-        # # Plot results
-        # frame_annotated = results[0].plot()
-
-        # # Cache the annotated frame
-        # cached_frame = frame_annotated
-
-
-        # Process every nth frame
-        if frame_skip == 0:
-            # Reset the frame skip counter
-            frame_skip = 5
-
-            # Detect and track objects using YOLOv8
-            results = model.track(frame_resized, persist=True)
-
-            # Plot results
-            frame_annotated = results[0].plot()
-
-            # Cache the annotated frame
-            cached_frame = frame_annotated
-        else:
-            # Use the cached frame for skipped frames
-            frame_annotated = cached_frame if cached_frame is not None else frame_resized
-            frame_skip -= 1
-
-        # Convert frame back to RGB format
-        frame_rgb = cv2.cvtColor(frame_annotated, cv2.COLOR_BGR2RGB)
-
-        return av.VideoFrame.from_ndarray(frame_rgb, format="rgb24")
+                # Reset frame skip
+                # frame_skip = 5
+        
+                # Convert frame to OpenCV format (BGR)
+                frame_bgr = frame.to_ndarray(format="bgr24")
+        
+                # Resize frame to reduce processing time
+                frame_resized = cv2.resize(frame_bgr, (320, 240)) # Instead of 640x480
+        
+                # # Detect and track objects using YOLOv8
+                # results = model.track(frame_resized, persist=True)
+        
+                # # Plot results
+                # frame_annotated = results[0].plot()
+        
+                # # Cache the annotated frame
+                # cached_frame = frame_annotated
+        
+        
+                # Process every nth frame
+                if frame_skip == 0:
+                    # Reset the frame skip counter
+                    frame_skip = 5
+        
+                    # Detect and track objects using YOLOv8
+                    results = self.model.track(frame_resized, persist=True)
+        
+                    # Plot results
+                    frame_annotated = results[0].plot()
+        
+                    # Cache the annotated frame
+                    cached_frame = frame_annotated
+                else:
+                    # Use the cached frame for skipped frames
+                    frame_annotated = cached_frame if cached_frame is not None else frame_resized
+                    frame_skip -= 1
+        
+                # Convert frame back to RGB format
+                frame_rgb = cv2.cvtColor(frame_annotated, cv2.COLOR_BGR2RGB)
+        
+                return av.VideoFrame.from_ndarray(frame_rgb, format="rgb24")
 
 # Streamlit web app
 def main():
@@ -85,9 +88,10 @@ def main():
         # Start the WebRTC stream with object tracking
         # webrtc_streamer(key="live-stream", video_frame_callback=recv,
         #                 rtc_configuration=rtc_configuration, sendback_audio=False)
-        webrtc_streamer(key="live-stream", mode=WebRtcMode.SENDRECV, video_frame_callback=recv, 
-                media_stream_constraints={"video": True, "audio": False},
+        webrtc_streamer(key="live-stream", mode=WebRtcMode.SENDRECV,   
                 rtc_configuration=RTC_CONFIGURATION,
+                video_processor_factory=VideoProcessor,
+                media_stream_constraints={"video": True, "audio": False},
                 video_html_attrs={
                     "style": {"width": "100%"},
                     "controls": False,
