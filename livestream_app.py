@@ -50,7 +50,7 @@ class VideoProcessor(VideoProcessorBase):
                 # Process every nth frame
                 if  self.frame_skip == 0:
                     # Reset the frame skip counter
-                     self.frame_skip = 5
+                    self.frame_skip = 5
         
                     # Detect and track objects using YOLOv8
                     results = self.model.track(frame_resized, persist=True)
@@ -63,7 +63,7 @@ class VideoProcessor(VideoProcessorBase):
                 else:
                     # Use the cached frame for skipped frames
                     frame_annotated = self.cached_frame if self.cached_frame is not None else frame_resized
-                     self.frame_skip -= 1
+                    self.frame_skip -= 1
         
                 # Convert frame back to RGB format
                 frame_rgb = cv2.cvtColor(frame_annotated, cv2.COLOR_BGR2RGB)
