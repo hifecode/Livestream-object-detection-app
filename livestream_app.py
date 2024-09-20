@@ -6,21 +6,21 @@ import os
 from ultralytics import YOLO
 from streamlit_webrtc import  (webrtc_streamer, VideoProcessorBase, WebRtcMode, RTCConfiguration)
 import av
-
+from turn import get_ice_servers
 
 model = YOLO('yolov8n.pt') 
 
-# # Global variable to store the latest frame with bounding boxes
-# cached_frame = None
-# frame_skip = 5  # Process every 5th frame
+# Global variable to store the latest frame with bounding boxes
+cached_frame = None
+frame_skip = 5  # Process every 5th frame
 # # Define a custom video processor class inheriting from VideoProcessorBase
-class VideoProcessor(VideoProcessorBase):
-    def __init__(self):
-        self.model = model
-        self.frame_skip = 10  # Class-level variable for frame skipping
-        self.cached_frame = None  # Class-level variable for cached frames
+# class VideoProcessor(VideoProcessorBase):
+#     def __init__(self):
+#         self.model = model
+#         self.frame_skip = 10  # Class-level variable for frame skipping
+#         self.cached_frame = None  # Class-level variable for cached frames
         
-    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+def recv(frame: av.VideoFrame) -> av.VideoFrame:
                 # Skip frames to reduce processing load
                 # global frame_skip, cached_frame
                 
@@ -48,22 +48,22 @@ class VideoProcessor(VideoProcessorBase):
         
         
                 # Process every nth frame
-                if  self.frame_skip == 0:
+                if  frame_skip == 0:
                     # Reset the frame skip counter
-                    self.frame_skip = 10
+                    frame_skip = 10
         
                     # Detect and track objects using YOLOv8
-                    results = self.model.track(frame_resized, persist=True)
+                    results = model.track(frame_resized, persist=True)
         
                     # Plot results
                     frame_annotated = results[0].plot()
         
                     # Cache the annotated frame
-                    self.cached_frame = frame_annotated
+                    cached_frame = frame_annotated
                 else:
                     # Use the cached frame for skipped frames
-                    frame_annotated = self.cached_frame if self.cached_frame is not None else frame_resized
-                    self.frame_skip -= 1
+                    frame_annotated = cached_frame if cached_frame is not None else frame_resized
+                    frame_skip -= 1
         
                 # Convert frame back to RGB format
                 frame_rgb = cv2.cvtColor(frame_annotated, cv2.COLOR_BGR2RGB)
@@ -91,9 +91,10 @@ def main():
         # Start the WebRTC stream with object tracking
         # webrtc_streamer(key="live-stream", video_frame_callback=recv,
         #                 rtc_configuration=rtc_configuration, sendback_audio=False)
-        webrtc_streamer(key="live-stream", mode=WebRtcMode.SENDRECV,   
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun2.l.google.com:19302"]}]},
-                video_processor_factory=VideoProcessor,
+        webrtc_streamer(key="live-stream", 
+                #mode=WebRtcMode.SENDRECV,  
+                video_frame_callback=video_frame_callback,
+                rtc_configuration={"iceServers": get_ice_servers()},
                 media_stream_constraints={"video": True, "audio": False},
                 async_processing=True)
 
