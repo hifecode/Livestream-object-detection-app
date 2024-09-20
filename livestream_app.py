@@ -4,7 +4,7 @@ import numpy as np
 import tempfile
 import os
 from ultralytics import YOLO
-from streamlit_webrtc import  webrtc_streamer, VideoHTMLAttributes
+from streamlit_webrtc import  webrtc_streamer, WebRtcMode
 import av
 
 
@@ -14,7 +14,7 @@ model = YOLO('yolov8n.pt')
 cached_frame = None
 frame_skip = 5  # Process every 5th frame
 
-def recv(frame: av.VideoFrame):
+def recv(frame: av.VideoFrame) -> av.VideoFrame:
         # Skip frames to reduce processing load
         global frame_skip, cached_frame
         
@@ -84,8 +84,9 @@ def main():
         # Start the WebRTC stream with object tracking
         # webrtc_streamer(key="live-stream", video_frame_callback=recv,
         #                 rtc_configuration=rtc_configuration, sendback_audio=False)
-        webrtc_streamer(key="live-stream", video_frame_callback=recv, 
+        webrtc_streamer(key="live-stream", mode=WebRtcMode.SENDRECV, video_frame_callback=recv, 
                 media_stream_constraints={"video": True, "audio": False},
+                async_processing=True,
                 video_html_attrs={
                     "style": {"width": "100%"},
                     "controls": False,
